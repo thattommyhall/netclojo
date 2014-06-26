@@ -1,7 +1,6 @@
 (ns netclojo.core
   (:require [cljs.core.async :as async
-             :refer [<! >! chan alts! timeout]]
-            )
+             :refer [<! >! chan alts! timeout]])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (enable-console-print!)
@@ -11,22 +10,22 @@
 
 (def width (atom nil))
 (def height (atom nil))
-(def cell-size (atom 5))
+(def cell-size 5)
 (def world (atom {}))
 
 (defn resized []
   (set! (.-width canvas) (.-innerWidth js/window))
   (set! (.-height canvas) (.-innerHeight js/window))
-  (reset! width (/ (.-width canvas) @cell-size))
-  (reset! height (/ (.-height canvas) @cell-size)))
+  (reset! width (/ (.-width canvas) cell-size))
+  (reset! height (/ (.-height canvas) cell-size)))
 
 (defn fill_sq [x y colour]
   (set! (.-fillStyle context) colour)
   (.fillRect context
-             (* x @cell-size)
-             (* y @cell-size)
-             @cell-size
-             @cell-size))
+             (* x cell-size)
+             (* y cell-size)
+             cell-size
+             cell-size))
 
 (defn deg->rad [d]
   (* Math/PI (/ d 360)))
@@ -68,7 +67,7 @@
 
 (resized)
 
-(def turtles (take 125 (repeatedly make-turtle)))
+(def turtles (take 50 (repeatedly make-turtle)))
 
 (defn draw [turtle]
   (let [t @turtle]
@@ -79,22 +78,22 @@
   (.fillRect context
              0
              0
-             (* @cell-size @width)
-             (* @cell-size @height)))
+             (* cell-size @width)
+             (* cell-size @height)))
 
 (go (loop []
-      (<! (timeout 10))
+      (<! (timeout 30))
       (blank)
       (doseq [t turtles]
-        (draw t)
-        )
+        (draw t))
+      (copy)
       (recur)))
 
 (go
  (loop []
-   (<! (timeout 1))
+   (<! (timeout 10))
    (doseq [t turtles]
      (fd t 1)
-     (rt t (rand 40))
-     (lt t (rand 40)))
+     (rt t (rand 60))
+     (lt t (rand 60)))
    (recur)))
