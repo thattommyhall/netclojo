@@ -5,23 +5,41 @@
 
 (enable-console-print!)
 
+(defn new-canvas
+  ([width height]
+     (let [canvas
+           (.createElement js/document "canvas")]
+       (set! (.-width canvas) width)
+       (set! (.-height canvas) height)
+       canvas))
+  ([] (new-canvas 0 0)))
+
+
 (def canvas (.getElementById js/document "world"))
 (def context (.getContext canvas "2d"))
+(def offscreen-canvas (new-canvas))
+(def offscreen-canvas-context (.getContext offscreen-canvas "2d"))
+
 
 (def width (atom nil))
 (def height (atom nil))
+
+
 (def cell-size 5)
 (def world (atom {}))
 
 (defn resized []
   (set! (.-width canvas) (.-innerWidth js/window))
   (set! (.-height canvas) (.-innerHeight js/window))
+  (set! (.-width offscreen-canvas) (.-innerWidth js/window))
+  (set! (.-height offscreen-canvas) (.-innerHeight js/window))
+
   (reset! width (/ (.-width canvas) cell-size))
   (reset! height (/ (.-height canvas) cell-size)))
 
 (defn fill_sq [x y colour]
-  (set! (.-fillStyle context) colour)
-  (.fillRect context
+  (set! (.-fillStyle offscreen-canvas-context) colour)
+  (.fillRect offscreen-canvas-context
              (* x cell-size)
              (* y cell-size)
              cell-size
@@ -67,6 +85,7 @@
 
 (resized)
 
+
 (def turtles (take 50 (repeatedly make-turtle)))
 
 (defn draw [turtle]
@@ -74,19 +93,23 @@
     (fill_sq (:x t) (:y t) red )))
 
 (defn blank []
-  (set! (.-fillStyle context) black)
-  (.fillRect context
+  (set! (.-fillStyle offscreen-canvas-context) black)
+  (.fillRect offscreen-canvas-context
              0
              0
              (* cell-size @width)
              (* cell-size @height)))
 
+(defn copy []
+  (.drawImage context offscreen-canvas 0 0))
+
 (go (loop []
-      (<! (timeout 30))
+      (<! (timeout 20))
       (blank)
       (doseq [t turtles]
         (draw t))
       (copy)
+      (println "hello")
       (recur)))
 
 (go
